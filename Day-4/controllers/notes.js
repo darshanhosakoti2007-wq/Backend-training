@@ -1,5 +1,7 @@
 const Notebook=require("../model/notes");
 
+const middleware=require("../middleware/auth");
+
 const createNotebook=async(req,res)=>{
     try{
         const{heading,content}=req.body;
@@ -48,4 +50,20 @@ const updateNotebook=async (req,res) => {
     res.send(error.message);
  }
 }
-module.exports={createNotebook,getNotes,updateNotebook};
+
+const deleteNotebook=async(req,res)=>{
+    try {
+        const id=req.params.id;
+    const notebook=await Notebook.findByIdAndDelete(id);
+    if(!notebook){
+        return res.send("Notebook not found");
+    }
+    res.send("Notes is deleted");
+    }
+     catch (error) {
+       res.send(error.message); 
+    }
+
+}
+
+module.exports={createNotebook,getNotes,updateNotebook,deleteNotebook,middleware};

@@ -1,10 +1,22 @@
 const User=require("../model/user");
-const createAccount=async(req,res)=>{
+const bcrypt=require("bcrypt");
+require("dotenv").config()
+
+const jwt=require("jsonwebtoken")
+
+
+const createAccount=async (req,res)=>{
 
     try{
             const {name,email,password}=req.body
+            const checkuser=await User.findOne({email})
+            
+            if(checkuser){
+                return res.status(401).send("user is already login")
+            }
+        const hashpassword=await bcrypt.hash(password,12);
     const userdata=await User.create({
-         name,email,password
+        name,email,password:hashpassword
     })
     res.json({
         message:"account create succesful",
@@ -21,22 +33,31 @@ const login=async(req,res)=>{
     try{
         const {email,password}=req.body;
         const userdata=await User.findOne({email});
-        if(!userdata){
+       
+        const hashpassword=await bcrypt.compare(password,userdata.password);
+        if(!hashpassword){
             throw new Error("User is not found");
         }
-        if(userdata.password!=password){
-            throw new Error("password is invalid");
-            
-        }
+
+        const token=await jwt.sign(
+            {id:userdata._id},
+            process.env.secret_key,
+            {expiresIn:"24h"}
+
+        )
+       
         res.json({
-            message:"welcome to kle college",userdata
+            message:"welcome to kle college",
+            userdata,
+            token:token
         })
     }
 
 
     catch(error){
-        res.send(error.message);
+        res.send({message:error.message});
     }
     
 }
 module.exports={createAccount,login}
+
